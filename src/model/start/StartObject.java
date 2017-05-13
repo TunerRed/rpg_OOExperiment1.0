@@ -17,6 +17,7 @@ public class StartObject extends GameObject{
 	
 	private static Image bac,help,pointers[];
 	private int x=400,y=260,pointer=0;
+	private boolean showHelp = false;
 	/**
 	 * 记录当前指针到了哪个选项的前面，绘画并处理确认键按下后的选择
 	 * */
@@ -51,9 +52,10 @@ public class StartObject extends GameObject{
 		g.drawImage(pointers[pointer++], x, y+step*75, null);
 		if(pointer==25)
 			pointer = 0;
-		if(Control.isPressed){
+		if(Control.isPressed && super.checkTimeGap(100))
+			showHelp = !showHelp;
+		if(showHelp)
 			g.drawImage(help, 0, 0, null);
-		}
 	}
 	
 	/**
@@ -62,19 +64,19 @@ public class StartObject extends GameObject{
 	 * */
 	@Override
 	protected void keyResponse() {
-		if(Control.UP&&super.checkTimeGap(60)){
+		if(Control.UP&&super.checkTimeGap(160)){
 			step--;
 			if(step<0)
 				step = 3;
 			super.change();
 		}
-		else if(Control.DOWN&&super.checkTimeGap(60)){
+		else if(Control.DOWN&&super.checkTimeGap(160)){
 			step++;
 			if(step > 3)
 				step = 0;
 			super.change();
 		}
-		else if(Control.Z&&super.checkTimeGap(100))
+		else if(Control.Z&&super.checkTimeGap(200))
 			die();
 	}
 	

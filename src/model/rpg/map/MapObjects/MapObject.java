@@ -12,6 +12,7 @@ import model.rpg.map.MapKind;
  * */
 @SuppressWarnings("serial")
 public class MapObject implements Serializable{
+	public static final int DEFAULT_IMGTYPE = -1;
 	public int toWhich,playerX=5, playerY=5;
 	private boolean canGo;
 	private int imgType=0;
@@ -25,14 +26,18 @@ public class MapObject implements Serializable{
 	 * @param kind Map的种类
 	 * @param imgType 选择的ImageSets中的图片
 	 * */
-	public MapObject(MapKind kind,int imgType){
+	public MapObject(MapKind kind){
 		this.kind = kind;
-		this.imgType = imgType;
+		this.imgType = DEFAULT_IMGTYPE;
 		
-		if(kind==MapKind.BARY||kind==MapKind.SHELL)
+		if(kind==MapKind.BLOCK||kind==MapKind.SHELL)
 			canGo = false;
 		else
 			canGo = true;
+	}
+	
+	public void setImage(int imageNo){
+		this.imgType = imageNo;
 	}
 	
 	public boolean canGo(){

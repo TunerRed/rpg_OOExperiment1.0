@@ -14,6 +14,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import control.*;
 import model.Game;
+import model.rpg.map.Map;
 /**
  * 游戏面板，带有一个重画线程和一个键盘监听和一个鼠标监听。
  * 当某个键按下或松开时，此类会改变Control类中变量的值。

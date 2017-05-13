@@ -19,19 +19,17 @@ public class MapAuto extends MapObject {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private String autoStyle;
+	private String reflectClassName;
 	private boolean trigger = false;
-	private static Properties properties = new Properties();
-	static {
-		try {
-			properties.load(MapAuto.class.getClassLoader().getResourceAsStream("source/rpg/properties/Auto.properties"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	
+	public MapAuto(String reflectClassName) {
+		super(MapKind.AUTO);
+		setName(reflectClassName);
 	}
-	public MapAuto(int imgType,int autoStyle) {
-		super(MapKind.AUTO, imgType);
-		this.autoStyle = properties.getProperty("D"+autoStyle);
+	
+	public void setName(String reflectClassName){
+		this.reflectClassName = reflectClassName;
+		return;
 	}
 	
 	/**已经触发过的地方不会再触发第二遍
@@ -49,7 +47,7 @@ public class MapAuto extends MapObject {
 				//只触发一次
 				trigger = true;
 				LoadObject.write(3);
-				Class.forName(autoStyle).getConstructor(BufferedImage.class).newInstance(map);
+				Class.forName(reflectClassName).getConstructor(BufferedImage.class).newInstance(map);
 			}
 		}
 		//并不知道catch了什么玩意
@@ -61,6 +59,7 @@ public class MapAuto extends MapObject {
 				IllegalArgumentException | 
 				InvocationTargetException e) {
 			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 

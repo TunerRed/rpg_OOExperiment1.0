@@ -20,7 +20,7 @@ public abstract class Story extends Auto {
 	/**
 	 * String类型initial负责在properties中读取内容的改变
 	 * 如：
-	 * 改变initial为“S”，则故事信息会读取S0、S1、S2等等
+	 * 改变initial为“A0”，则故事信息会读取A00、A01、A02等等
 	 * */
 	protected String initial = null;
 	/**
@@ -31,7 +31,7 @@ public abstract class Story extends Auto {
 	public Story(BufferedImage image) {
 		super(image);
 		try {
-			properties.load(Story.class.getClassLoader().getResourceAsStream("source/rpg/properties/story.properties"));
+			properties.load(Story.class.getClassLoader().getResourceAsStream("source/rpg/properties/Info.properties"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

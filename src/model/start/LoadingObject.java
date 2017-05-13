@@ -10,7 +10,6 @@ import model.GameObject;
 import model.over.GameOverObject;
 import model.rpg.RpgObject;
 import model.rpg.SaveData;
-import model.rpg.map.MapObjects.auto.Story2;
 /**
  * 缓冲功能，在加载RpgObject类之前使用此类，避免游戏看上去变卡的现象。
  * */
@@ -60,7 +59,7 @@ public class LoadingObject extends GameObject {
 	@Override
 	public void die() {
 		if(save == null)
-			new Story2();
+			new RpgObject();
 		else
 			new RpgObject(save);
 	}

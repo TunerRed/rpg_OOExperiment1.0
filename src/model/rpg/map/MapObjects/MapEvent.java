@@ -1,83 +1,51 @@
 package model.rpg.map.MapObjects;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Properties;
 
 import model.rpg.Direction;
 import model.rpg.Item;
 import model.rpg.Player;
+import model.rpg.map.Map;
+import model.rpg.map.MapEditer;
 import model.rpg.map.MapKind;
 
-@SuppressWarnings("serial")
-public class MapEvent extends MapObject {
-	protected static Properties properties = new Properties();
-	protected static ArrayList<String> Null = new ArrayList<String>();
-	static {
-		try {
-			properties.load(MapEvent.class.getClassLoader().getResourceAsStream("source/rpg/properties/eventInfo.properties"));
-			Null.add("...");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	private ArrayList<String> info = new ArrayList<String>();
-	
-	private boolean hasShown = false;
+/**
+ * 当看过某个信息之后
+ * 达成某个条件（即成就）
+ * 此时地图的某个地方发生改变
+ * 从而让人物在一个会变化的地图中探索
+ * */
+
+public class MapEvent extends MapInfo {
+	private static final long serialVersionUID = 1L;
+	private String []subEdit = null;
+	private boolean triger = false;
 	protected Item item = null;
 	
-	/**
-	 * 多种构造方法
-	 * 默认图片为地面
-	 * 默认没有添加的物品，图片地面
-	 * 带有物品的构造方法
-	 * 带有物品并且图片可以编辑的构造方法
-	 * @param infoNum 文字信息，在EventInfo.properties中查找
-	 * @param direction 时间触发的方向
-	 * */
-	
-	public MapEvent(int[] infoNum,Direction direction) {
-		super(MapKind.EVENT,36);
-		init(infoNum,direction);
-	}
-	public MapEvent(int[] infoNum,Direction direction,int imgType) {
-		super(MapKind.EVENT,imgType);
-		init(infoNum,direction);
-	}
-	public MapEvent(int[] infoNum,Direction direction,Item item){
-		this(infoNum,direction);
+	public MapEvent(int[] infoNum,Direction direction,Item item,String[] subEdit,int imgType) {
+		super(infoNum, direction);
+		super.changeKind(MapKind.EVENT);
 		this.item = item;
-	}
-	public MapEvent(int[] infoNum,Direction direction,Item item,int imgType){
-		this(infoNum,direction,imgType);
-		this.item = item;
-	}
-	private void init(int[] infoNum,Direction direction){
-		for(int i = 0 ; i < infoNum.length ; i++){
-			info.add(properties.getProperty("I"+infoNum[i],"..."));
-		}
-		super.direction = direction;
+		setImage(imgType);
+		this.subEdit = subEdit;
 	}
 	/**
-	 * 改变这个元素的MapKind，给子类使用。
-	 * @param kind Map的种类
+	 * 根据地图信息不同，执行不同操作，改变地图某个地方的状态
 	 * */
-	protected void changeKind(MapKind kind){
-		super.kind = kind;
-	}
-	
-	/**
-	 * 返回这个事件在调查后应该显示的信息
-	 * 如果调查后会获得物品则应该为人物添加物品，
-	 * 并用boolean设置不会再添加第二次
-	 * */
-	public ArrayList<String> getInfo(){
-		if(item != null && !hasShown){
+	public void editMapList(ArrayList<Map> mapList){
+		if(triger)
+			return;
+		triger = true;
+		if(item !=null){
 			Player.getInstance().addItem(item);
-			hasShown = true;
-		}else if(item !=null && hasShown){
-			return Null;
 		}
-		return info;
+		if(subEdit == null)
+			return;
+		MapEditer editer = new MapEditer();
+		editer.loadProperties();
+		editer.setMaps(mapList);
+		for(int i = 0; i < subEdit.length; i++){
+			editer.parse(subEdit[i]);
+		}
 	}
 }

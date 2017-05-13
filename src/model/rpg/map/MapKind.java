@@ -4,6 +4,6 @@ package model.rpg.map;
  * */
 public enum MapKind {
 	FLOOR,							//可以走
-	BARY,							//不能走
-	EVENT,ACHIEVEMENT,AUTO,DOOR,SHELL		//需要特殊处理的Object
+	BLOCK,							//不能走
+	EVENT,INFO,AUTO,DOOR,SHELL		//需要特殊处理的Object
 }

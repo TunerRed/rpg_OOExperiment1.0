@@ -4,13 +4,17 @@ import java.awt.Graphics;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Properties;
 
+import control.Control;
+import control.Lib;
 import model.Game;
 import model.GameObject;
 import model.rpg.map.Map;
+import model.rpg.map.MapEditer;
 import model.rpg.map.MapObjects.MapObject;
 import model.start.ItemObject;
-import control.*;
+import model.start.LoadObject;
 /**
  * 游戏运行时主要重画此类即内部的地图和人物，
  * 这个类中应存在一个saveData类，
@@ -20,14 +24,14 @@ import control.*;
 public class RpgObject extends GameObject{
 	
 	//一次读取所有地图
-	protected ArrayList<Map> map = new ArrayList<Map>();
+	protected ArrayList<Map> maps = new ArrayList<Map>();
 	protected Map currentMap;
 	protected MapObject doorInfo;
 	private ItemObject itemObject;
 	//读取地图文件
 	private ObjectInputStream read;
 	//记录目前状态
-	private boolean isRunning = false,isStanding = true;
+	private boolean isRunning = false,isStanding = true,isDoor=false;
 	protected Direction direction = Direction.R;
 	private long startTime = System.currentTimeMillis();
 	private long lastTimeBefore = 0;
@@ -38,36 +42,8 @@ public class RpgObject extends GameObject{
 	 * */
 	public RpgObject(){
 		super.clearStatic();
-		try {
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/keting.map"));
-			map.add((Map)read.readObject());
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/tushushi.map"));
-			map.add((Map)read.readObject());
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/woshi1.map"));
-			map.add((Map)read.readObject());
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/woshi2.map"));
-			map.add((Map)read.readObject());
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/guidaqiang.map"));
-			map.add((Map)read.readObject());
-			read=new ObjectInputStream(this.getClass()
-					.getClassLoader().getResourceAsStream("source/rpg/maps/final.map"));
-			map.add((Map)read.readObject());
-			for(int i = 0; i < map.size(); i++){
-				map.get(i).merge();
-			}
-			
-		} catch (IOException|ClassNotFoundException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-		this.currentMap = map.get(3);
+		loadMaps();
 		itemObject = new ItemObject();
-		Player.getInstance().addItem(new Item(4));
 		super.musicStart("source/rpg/时钟.wav");
 	}
 	/**
@@ -84,8 +60,7 @@ public class RpgObject extends GameObject{
 	 *  @param doNotPlayLoopAgain 只要使用此构造方法，则不再次播放背景音乐
 	 * */
 	public RpgObject(SaveData save,int doNotPlayLoopAgain){
-		super.clearStatic();
-		map = save.getMaps();
+		maps = save.getMaps();
 		currentMap = save.getCurrent();
 		Map.playerX = save.getX();
 		Map.playerY = save.getY();
@@ -93,6 +68,34 @@ public class RpgObject extends GameObject{
 		Player.getInstance().updateItems(save.getItem());
 		lastTimeBefore = save.getLastTime();
 		itemObject = new ItemObject();
+	}
+	
+	public void loadMaps(){
+		try {
+			Properties properties = new Properties();
+			properties.load(MapEditer.class.getClassLoader().getResourceAsStream("source/rpg/properties/Maps.properties"));
+			maps = new ArrayList<Map>();
+			int createCount = 0;
+			while(true){
+				String createProperty = properties.getProperty("M"+createCount);
+				if(createProperty==null)
+					break;
+				else{
+					String createInfo = createProperty.split("_")[1];
+					//create map from file information
+					read=new ObjectInputStream(this.getClass()
+							.getClassLoader().getResourceAsStream("source/rpg/maps/"+createInfo+".map"));
+					maps.add((Map)read.readObject());
+					
+				}
+				createCount++;
+			}
+		} catch (IOException|ClassNotFoundException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		this.currentMap = maps.get(0);
+		
 	}
 	
 	@Override
@@ -150,41 +153,37 @@ public class RpgObject extends GameObject{
 			currentMap.paint(g);
 			Player.getInstance().draw(g,direction);
 			currentMap.checkShell(g);
-			//最后加上阴影
-			//g.drawImage(ImageSets.getImg(52), 0, 0, null);
 			
-			//检查是否达成某个条件
-			if(currentMap.isAchievement(direction) && Control.Z ){
-				currentMap.editMapList(map);
-				currentMap.remerge();
+			if(!itemObject.isShow()){
 				//调查物品显示信息
 				currentMap.keyResponse(g, direction);
-				//显示对话框时焦点不在JPanel上，不能自动将Z设为false
-				Control.Z = false;
-			}else{
-				currentMap.keyResponse(g, direction);
+				//检查是否达成某个条件
+				if(currentMap.isEvent(direction) && Control.Z)
+					currentMap.editMapList(maps);
 			}
-			
 		}
-		
 		//走动时调用
 		else{
 			//门的操作与地图转换
 			if(currentMap.isDoor(direction)){
 				super.tempSoundPlay("source/rpg/door.wav");
 				doorInfo = currentMap.getDoor(direction);
-				currentMap = map.get(doorInfo.toWhich);
+				isDoor = true;
+			}
+			if(isDoor){
+				isDoor = false;
+				currentMap = maps.get(doorInfo.toWhich);
 				currentMap.setLocation(doorInfo.playerX, doorInfo.playerY);
 				return;
 			}
 			currentMap.paint(g,direction,isRunning);
 			Player.getInstance().draw(g,isRunning,direction);
 			currentMap.checkShell(g);
-			//g.drawImage(ImageSets.getImg(52), 0, 0, null);
 		}
 		
 		//检验是否为死亡点或剧情
 		currentMap.checkAuto(g);
+		currentMap.chase(g);
 		
 	}
 	
@@ -192,7 +191,6 @@ public class RpgObject extends GameObject{
 	public void draw(Graphics g) {
 		try{
 			isStanding = true;
-			
 			if(itemObject.isShow()){
 				paint(g);
 				itemObject.draw(g);
@@ -212,7 +210,7 @@ public class RpgObject extends GameObject{
 	 * 获取当前游戏进度，存档用
 	 * */
 	public SaveData getNowStatus(){
-		return new SaveData(map,Player.getInstance().getItems(),currentMap,Map.playerX,Map.playerY,direction,lastTimeBefore + ( System.currentTimeMillis() - startTime ));
+		return new SaveData(maps,Player.getInstance().getItems(),currentMap,Map.playerX,Map.playerY,direction,lastTimeBefore + ( System.currentTimeMillis() - startTime ));
 	}
 	
 	@Override

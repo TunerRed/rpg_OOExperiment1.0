@@ -14,7 +14,7 @@ import control.*;
 public class ProblemObject extends GameObject {
 	Image back;
 	public ProblemObject(){
-		back = ImageSets.getImg(65);
+		back = ImageSets.getImg(1);
 	}
 
 	@Override
@@ -24,7 +24,7 @@ public class ProblemObject extends GameObject {
 			die();
 			return;
 		}
-		if(Control.isPressed && (Control.clickX>241&&Control.clickX<581)&&(Control.clickY>56&&Control.clickY<126)){
+		if(Control.isPressed && (Control.clickX>Lib.gameWIDTH/7 && Control.clickX<Lib.gameWIDTH / 2)&&(Control.clickY>56&&Control.clickY<126)){
 			if(super.checkTimeGap(1000)){
 				super.tempSoundPlay("source/start/problemobject.wav");
 				try{
@@ -41,8 +41,6 @@ public class ProblemObject extends GameObject {
 
 	@Override
 	public void draw(Graphics g) {
-		// TODO 自动生成的方法存根
-		
 		g.drawImage(back, 0, 0, null);
 		if(Control.isPressed && (Control.clickX>241&&Control.clickX<581)&&(Control.clickY>56&&Control.clickY<126)){
 			g.setColor(Color.BLUE);
@@ -54,7 +52,6 @@ public class ProblemObject extends GameObject {
 
 	@Override
 	public void die() {
-		// TODO 自动生成的方法存根
 		super.musicStop();
 		new StartObject();
 	}

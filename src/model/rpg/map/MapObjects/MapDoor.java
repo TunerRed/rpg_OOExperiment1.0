@@ -11,8 +11,9 @@ import model.rpg.map.MapKind;
 @SuppressWarnings("serial")
 public class MapDoor extends MapObject {
 	private Item item = null;
-	public MapDoor(int toWhich, int playerX, int playerY, int imgType) {
-		super(MapKind.DOOR, imgType);
+	public MapDoor(int toWhich, int playerX, int playerY) {
+		super(MapKind.DOOR);
+		super.setCanGo(true);
 		super.toWhich = toWhich;
 		super.playerX = playerX;
 		super.playerY = playerY;
@@ -27,8 +28,8 @@ public class MapDoor extends MapObject {
 	 * @param cango 设置目前是否能走动，
 	 * @param item 设置通过这扇门可能需要的物品
 	 * */
-	public MapDoor(int toWhich, int playerX, int playerY, int imgType,boolean cango,Item item){
-		this(toWhich, playerX, playerY, imgType);
+	public MapDoor(int toWhich, int playerX, int playerY,boolean cango,Item item){
+		this(toWhich, playerX, playerY);
 		this.item = item;
 		super.setCanGo(cango);
 	}

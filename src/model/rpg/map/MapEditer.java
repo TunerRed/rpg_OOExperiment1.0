@@ -4,13 +4,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Properties;
 
+import control.ImageSets;
 import model.rpg.Direction;
 import model.rpg.Item;
-import model.rpg.map.MapObjects.MapAchievement;
 import model.rpg.map.MapObjects.MapAuto;
 import model.rpg.map.MapObjects.MapDoor;
 import model.rpg.map.MapObjects.MapEvent;
+import model.rpg.map.MapObjects.MapInfo;
 import model.rpg.map.MapObjects.MapObject;
 
 /**
@@ -22,345 +25,210 @@ import model.rpg.map.MapObjects.MapObject;
  * */
 public class MapEditer {
 
-	private String path;
-	private Map map;
+	private ArrayList<String> paths;
+	private ArrayList<Map> maps;
 	private ObjectOutputStream output;
+	private Properties properties = new Properties();
+	private Properties auto_properties = new Properties();
 
 	public static void main(String[] args) {
 		System.out.println("BUILD START");
-		new MapEditer();
+		new MapEditer().init();
 		System.out.println("BUILD SUCCESSFULLY");
 	}
-
-	public MapEditer(){
+	
+	public void init(){
+		ImageSets.init();
+		createMap();
 		editMap();
+		write();
 	}
 	
 	public void write() {
 		try {
-			output = new ObjectOutputStream(new FileOutputStream(new File(path)));
-			output.writeObject(map);
-			output.close();
+			for(int i = 0; i < paths.size(); i++){
+				File file = new File(paths.get(i));
+				if(file.exists())
+					file.delete();
+				output = new ObjectOutputStream(new FileOutputStream(file));
+				output.writeObject(maps.get(i));
+				
+				output.flush();
+				output.close();
+			}
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
-	public void editMap() {
-		this.path = "bin/source/rpg/maps/keting.map";
-		keting();
-		write();
-		this.path = "bin/source/rpg/maps/tushushi.map";
-		tushushi();
-		write();
-		this.path = "bin/source/rpg/maps/woshi1.map";
-		woshi1();
-		write();
-		this.path = "bin/source/rpg/maps/woshi2.map";
-		woshi2();
-		write();
-		this.path = "bin/source/rpg/maps/guidaqiang.map";
-		guidaqiang();
-		write();
-		this.path = "bin/source/rpg/maps/final.map";
-		finalMap();
-		write();
+	
+	private void createMap(){
+		loadProperties();
+		maps = new ArrayList<Map>();
+		paths = new ArrayList<String>();
+		int createCount = 0;
+		while(true){
+			String createProperty = properties.getProperty("M"+createCount);
+			if(createProperty==null)
+				break;
+			else{
+				String createInfo[] = createProperty.split("_");
+				//create map from file information
+				Map map = new Map(Integer.parseInt(createInfo[2]),Integer.parseInt(createInfo[3]));
+				map.setMapNo(Integer.parseInt(createInfo[0]));
+				maps.add(map);		
+				String path = "src/source/rpg/maps/"+createInfo[1]+".map";
+				paths.add(path);
+			}
+			createCount++;
+		}
 	}
 	
-	public void finalMap(){
-		map = new Map(11,14);
-		for(int i = 4;i<=8;i++)
-			for(int j = 5; j <= 9 ; j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR,36));
-		//画上面的墙
-		for (int j = 5; j <= 9; j++)
-			map.edit(3, j, new MapObject(MapKind.BARY, 2));
-		//画下面的墙
-		for (int j = 5; j <= 9; j++)
-			map.edit(9, j, new MapObject(MapKind.BARY, 1));
-		
-		//画左面的墙
-		for (int j = 4; j <= 8; j++)
-			map.edit(j, 4, new MapObject(MapKind.BARY, 4));
-		//画右面的墙
-		for (int j = 4; j <= 8; j++)
-			map.edit(j, 10, new MapObject(MapKind.BARY, 3));
-		map.edit(4, 10, new MapObject(MapKind.BARY, 7));
-		map.edit(5, 10, new MapObject(MapKind.BARY, 0));
-		map.edit(6, 10, new MapObject(MapKind.FLOOR, 36));
-		map.edit(6, 11, new MapDoor(4,6,5,0));
-		map.edit(7, 10, new MapObject(MapKind.BARY, 5));
-		map.edit(6, 9, new MapAuto(36,1));
+	public boolean loadProperties(){
+		try {
+			properties.load(MapEditer.class.getClassLoader().getResourceAsStream("source/rpg/properties/Maps.properties"));
+			auto_properties.load(MapEditer.class.getClassLoader().getResourceAsStream("source/rpg/properties/Auto.properties"));
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(-1);
+		}
+		return true;
 	}
 	
-	public void guidaqiang(){
-		map = new Map(13,30);
-		for(int i = 5 ; i <= 7 ; i++)
-			for(int j = 6 ; j <= 23 ; j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR,36));
-		for(int j = 6 ; j <= 23 ; j++)
-			map.edit(3, j, new MapObject(MapKind.BARY,2));
-		map.edit(3, 12, new MapObject(MapKind.BARY,66));
-		map.edit(5, 12, new MapEvent(new int[]{93,94,95},Direction.U,new Item(2),36));
-		for(int j = 6 ; j <= 23 ; j++)
-			map.edit(8, j, new MapObject(MapKind.BARY,1));
-		
-		map.edit(4, 5, new MapObject(MapKind.BARY,8));
-		map.edit(7, 5, new MapObject(MapKind.BARY,6));
-		map.edit(6, 5, new MapObject(MapKind.FLOOR,36));
-		
-		map.edit(4, 24, new MapObject(MapKind.BARY,7));
-		map.edit(6, 24, new MapObject(MapKind.FLOOR,36));
-		map.edit(7, 24, new MapObject(MapKind.BARY,5));
-		map.edit(6, 23, new MapAuto(36,6));
-		
-		map.edit(6, 4, new MapDoor(4,6,24,0));
-		map.edit(6, 25, new MapDoor(3,10,5,0));
-	}
-	
-	public void tushushi(){
-		map = new Map(15,16);
-		for(int i = 5;i<=10;i++)
-			for(int j = 5; j <= 11 ; j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR,36));
-		//画上面的墙
-		for (int j = 5; j <= 11; j++)
-			map.edit(3, j, new MapObject(MapKind.BARY, 2));
-		//画下面的墙
-		for (int j = 5; j <= 11; j++)
-			map.edit(11, j, new MapObject(MapKind.BARY, 1));
-		//画左面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 4, new MapObject(MapKind.BARY, 4));
-		//画右面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 12, new MapObject(MapKind.BARY, 3));
-		map.edit(11, 8, new MapObject(MapKind.FLOOR,36));
-		map.edit(11, 7, new MapObject(MapKind.BARY,6));
-		map.edit(11, 9, new MapObject(MapKind.BARY,5));
-		
-		map.edit(7, 11, new MapObject(MapKind.BARY,11));
-		map.edit(10, 6, new MapObject(MapKind.BARY,12));
-		
-		//画书架
-		map.edit(4, 6, new MapObject(MapKind.BARY,14));
-		map.edit(4, 7, new MapObject(MapKind.BARY,0));
-		map.edit(5, 6, new MapObject(MapKind.BARY,0));
-		map.edit(5, 7, new MapObject(MapKind.BARY,0));
-		
-		map.edit(4, 9, new MapObject(MapKind.BARY,14));
-		map.edit(5, 9, new MapObject(MapKind.BARY,0));
-		map.edit(4, 10, new MapObject(MapKind.BARY,0));
-		map.edit(5, 10, new MapObject(MapKind.BARY,0));
-		//画特殊的书架
-		//左半块
-		map.edit(6, 6, new MapEvent(new int[]{15},Direction.U,44));
-		map.edit(6, 9, new MapObject(MapKind.FLOOR,44));
-		map.edit(8, 6, new MapObject(MapKind.FLOOR,44));
-		map.edit(8, 9, new MapObject(MapKind.FLOOR,44));
-		
-		map.edit(5, 6, new MapObject(MapKind.SHELL,0));
-		map.edit(5, 9, new MapObject(MapKind.SHELL,0));
-		map.edit(7, 6, new MapObject(MapKind.SHELL,0));
-		map.edit(7, 9, new MapObject(MapKind.SHELL,0));
-		map.edit(9, 6, new MapObject(MapKind.SHELL,0));
-		map.edit(9, 9, new MapObject(MapKind.SHELL,0));
-		//右半块
-		map.edit(6, 7, new MapObject(MapKind.FLOOR,45));
-		map.edit(6, 10, new MapObject(MapKind.FLOOR,45));
-		map.edit(8, 7, new MapObject(MapKind.FLOOR,45));
-		map.edit(8, 10, new MapObject(MapKind.FLOOR,45));
-		
-		map.edit(5, 7, new MapObject(MapKind.SHELL,0));
-		map.edit(5, 10, new MapObject(MapKind.SHELL,0));
-		map.edit(7, 7, new MapObject(MapKind.SHELL,0));
-		map.edit(7, 10, new MapObject(MapKind.SHELL,0));
-		map.edit(9, 7, new MapObject(MapKind.SHELL,0));
-		map.edit(9, 10, new MapObject(MapKind.SHELL,0));
-		
-		map.edit(12, 8, new MapDoor(0,7,7,0));
-		map.edit(6, 6, new MapAchievement(new int[]{-1,15,80,81,82,83,84,85,86,87,88,89,90,91,92,0,96},Direction.U,0,44));
-		map.edit(8, 10, new MapEvent(new int[]{21,22},Direction.U,45));
-	}
-	
-	public void woshi2(){
-		map = new Map(15,17);
-		for(int i = 5;i<=10;i++)
-			for(int j = 5; j <= 11 ; j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR,36));
-		//画上面的墙
-		for (int j = 5; j <= 11; j++)
-			map.edit(3, j, new MapObject(MapKind.BARY, 2));
-		//画下面的墙
-		for (int j = 4; j <= 11; j++)
-			map.edit(11, j, new MapObject(MapKind.BARY, 1));
-		
-		//画左面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 4, new MapObject(MapKind.BARY, 4));
-		//画右面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 12, new MapObject(MapKind.BARY, 3));
-		map.edit(5, 5, new MapObject(MapKind.BARY,30));
-		map.edit(6, 5, new MapObject(MapKind.BARY,0));
-		
-		map.edit(5, 6, new MapObject(MapKind.BARY,19));
-		
-		map.edit(7, 7, new MapObject(MapKind.BARY,20));
-		map.edit(7, 8, new MapObject(MapKind.BARY,0));
-		
-		map.edit(4, 10, new MapObject(MapKind.BARY,21));
-		map.edit(5, 10, new MapObject(MapKind.BARY,0));
-		map.edit(4, 11, new MapObject(MapKind.BARY,0));
-		map.edit(5, 11, new MapObject(MapKind.BARY,0));
-		
-		map.edit(7, 12, new MapObject(MapKind.BARY,7));
-		map.edit(8, 12, new MapObject(MapKind.BARY,0));
-		map.edit(9, 12, new MapObject(MapKind.FLOOR,36));
-		map.edit(10, 12, new MapObject(MapKind.BARY,5));
-		
-		map.edit(9, 13, new MapDoor(0,5,14,0,false,new Item(2)));
-		
-		map.edit(8, 4, new MapObject(MapKind.BARY, 8));
-		map.edit(9, 4, new MapObject(MapKind.BARY, 0));
-		map.edit(10, 4, new MapDoor(4,6,24,0));
-		
-		map.edit(6, 6, new MapAuto(36,3));
-	}
-	
-	public void woshi1(){
-		map = new Map(14,19);
-		for(int i =5;i<=10;i++)
-			for(int j =6;j<=15;j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR,36));
-		//画上面的墙
-		for (int j = 6; j <= 15; j++)
-			map.edit(3, j, new MapObject(MapKind.BARY, 2));
-		//画下面的墙
-		for (int j = 6; j <= 15; j++)
-			map.edit(11, j, new MapObject(MapKind.BARY, 1));
-		//画左面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 5, new MapObject(MapKind.BARY, 4));
-		//画右面的墙
-		for (int j = 4; j <= 10; j++)
-			map.edit(j, 16, new MapObject(MapKind.BARY, 3));
-		map.edit(4, 5+1, new MapObject(MapKind.BARY,13));
-		map.edit(4, 6+1, new MapObject(MapKind.BARY,0));
-		map.edit(5, 5+1, new MapObject(MapKind.BARY,0));
-		map.edit(5, 6+1, new MapObject(MapKind.BARY,0));
-		map.edit(3, 7+1, new MapObject(MapKind.BARY,33));
-		map.edit(3, 11+1, new MapObject(MapKind.BARY,33));
-		map.edit(3, 9+1, new MapObject(MapKind.BARY,35));
-		map.edit(4, 13+1, new MapObject(MapKind.BARY,14));
-		map.edit(4, 14+1, new MapObject(MapKind.BARY,0));
-		map.edit(5, 13+1, new MapObject(MapKind.BARY,0));
-		map.edit(5, 14+1, new MapObject(MapKind.BARY,0));
-		map.edit(8, 14+1, new MapObject(MapKind.BARY,30));
-		map.edit(9, 14+1, new MapObject(MapKind.BARY,0));
-		map.edit(6, 13+1, new MapEvent(new int[]{1}, Direction.U));
-		map.edit(6, 14+1, new MapEvent(new int[]{1}, Direction.U));
-		map.edit(5, 9+1, new MapEvent(new int[]{2}, Direction.U,new Item(3)));
-		map.edit(5, 7+1, new MapEvent(new int[]{3}, Direction.U));
-		map.edit(5, 11+1, new MapEvent(new int[]{3}, Direction.U));
-		map.edit(9, 13+1, new MapEvent(new int[]{4}, Direction.R));
-		map.edit(9, 6+1, new MapAuto(43,0));
-		map.edit(7, 4+1, new MapObject(MapKind.BARY,8));
-		map.edit(8, 4+1, new MapObject(MapKind.BARY,0));
-		
-		map.edit(10, 4+1, new MapObject(MapKind.BARY,6));
-		map.edit(9, 4+1, new MapObject(MapKind.FLOOR,36));
-		
-		map.edit(9, 4, new MapDoor(0,5,16,0));
+	private void editMap(){
+		int editCount = 0;
+		while(true){
+			String editProperty = properties.getProperty("E"+editCount);
+			if(parse(editProperty))
+				editCount++;
+			else
+				break;
+		}
 	}	
 	
-	public void keting(){
-		map = new Map(20,24);
-		//画地板
-		for(int i = 8 ;i <= 15;i++)
-			for(int j = 5 ; j <= 20;j++)
-				map.edit(i, j, new MapObject(MapKind.FLOOR, 36));
-		//画上面的墙
-		for (int j = 5; j <= 20; j++)
-			map.edit(6, j, new MapObject(MapKind.BARY, 2));
-		//画下面的墙
-		for (int j = 5; j <= 20; j++)
-			map.edit(16, j, new MapObject(MapKind.BARY, 1));
-		//画左面的墙
-		for (int j = 7; j <= 15; j++)
-			map.edit(j, 4, new MapObject(MapKind.BARY, 4));
-		//画右面的墙
-		for (int j = 7; j <= 15; j++)
-			map.edit(j, 21, new MapObject(MapKind.BARY, 3));
-		
-		//门的编辑
-		map.edit(6, 7, new MapDoor(1,11,8,38,false,new Item(1)));
-		map.edit(5, 13, new MapDoor(3,9,12,0));
-		map.edit(5, 17, new MapDoor(2,9,5,0));
-		
-		map.edit(6, 14, new MapObject(MapKind.BARY,9));
-		map.edit(6, 16, new MapObject(MapKind.BARY,10));
-		map.edit(6, 15, new MapObject(MapKind.FLOOR,36));
-		map.edit(3, 14, new MapObject(MapKind.BARY,2));
-		map.edit(3, 15, new MapObject(MapKind.BARY,2));
-		map.edit(3, 16, new MapObject(MapKind.BARY,2));
-		map.edit(5, 14, new MapObject(MapKind.FLOOR,36));
-		map.edit(5, 15, new MapObject(MapKind.FLOOR,36));
-		map.edit(5, 16, new MapObject(MapKind.FLOOR,36));
-		
-		map.edit(6, 13, new MapObject(MapKind.BARY,37));
-		map.edit(7, 13, new MapObject(MapKind.BARY,0));
-		
-		map.edit(7, 7, new MapObject(MapKind.FLOOR,36));
-		map.edit(7, 15, new MapObject(MapKind.FLOOR,36));
-		map.edit(7, 18, new MapObject(MapKind.BARY,32));
-		map.edit(7, 19, new MapObject(MapKind.BARY,0));
-		map.edit(8, 18, new MapObject(MapKind.BARY,0));
-		map.edit(8, 19, new MapObject(MapKind.BARY,0));
-		
-		map.edit(10, 8, new MapObject(MapKind.BARY,41));
-		map.edit(11, 8, new MapObject(MapKind.BARY,0));
-		map.edit(10, 9, new MapObject(MapKind.BARY,0));
-		map.edit(11, 9, new MapObject(MapKind.BARY,0));
-		map.edit(10, 7, new MapObject(MapKind.BARY,17));
-		map.edit(11, 7, new MapObject(MapKind.BARY,0));
-		map.edit(10, 18, new MapObject(MapKind.BARY,18));
-		map.edit(11, 18, new MapObject(MapKind.BARY,0));
-		map.edit(10, 19, new MapObject(MapKind.BARY,0));
-		map.edit(11, 19, new MapObject(MapKind.BARY,0));
-		map.edit(7, 20, new MapObject(MapKind.BARY,31));
-		map.edit(8, 20, new MapObject(MapKind.BARY,0));
-		
-		map.edit(13, 7, new MapObject(MapKind.BARY,26));
-		map.edit(13, 8, new MapObject(MapKind.BARY,0));
-		map.edit(13, 9, new MapObject(MapKind.BARY,42));
-		map.edit(13, 10, new MapObject(MapKind.BARY,0));
-		map.edit(14, 10, new MapObject(MapKind.BARY,27));
-		map.edit(15, 10, new MapObject(MapKind.BARY,0));
-		map.edit(14, 7, new MapObject(MapKind.BARY,34));
-		map.edit(14, 8, new MapObject(MapKind.BARY,28));
-		map.edit(14, 9, new MapObject(MapKind.BARY,0));
-		map.edit(15, 9, new MapObject(MapKind.BARY,29));
-		map.edit(12, 18, new MapObject(MapKind.BARY,15));
-		map.edit(12, 19, new MapObject(MapKind.BARY,0));
-		map.edit(10, 20, new MapObject(MapKind.FLOOR,16));
-		map.edit(11, 20, new MapObject(MapKind.FLOOR,0));
-		
-		map.edit(6, 4, new MapObject(MapKind.BARY,22));
-		map.edit(6, 21, new MapObject(MapKind.BARY,23));
-		map.edit(16, 4, new MapObject(MapKind.BARY,24));
-		map.edit(16, 21, new MapObject(MapKind.BARY,25));
-		
-		map.edit(16, 13, new MapObject(MapKind.BARY,6));
-		
-		map.edit(16, 15, new MapObject(MapKind.BARY,5));
-		
-		map.edit(8, 13, new MapEvent(new int[]{5,9},Direction.U));
-		map.edit(12, 8, new MapEvent(new int[]{6},Direction.U));
-		map.edit(9, 20, new MapAchievement(new int[]{1,20,21,16,17,18},Direction.U,1));
-		map.edit(16, 14, new MapEvent(new int[]{8},Direction.D));
-		
-		map.edit(15, 8, new MapEvent(new int[]{11,12,13,14},Direction.R,new Item(1)));
-		
+	public void setMaps(ArrayList<Map> maps){
+		this.maps = maps;
 	}
+
+	public boolean parse(String editProperty){
+		if(editProperty==null)
+			return false;
+		else{
+			String[] editInfo = editProperty.split("_");
+			int which = Integer.parseInt(editInfo[0]);
+			int row = Integer.parseInt(editInfo[1]);
+			int col = Integer.parseInt(editInfo[2]);
+			Map map = maps.get(which);
+			switch(Integer.parseInt(editInfo[3])){
+			case 0:
+				map.edit(row, col, new MapObject(MapKind.FLOOR));
+				//floor that has different image
+				if(editInfo.length > 4){
+					map.remerge(row, col, Integer.parseInt(editInfo[4]));
+				}
+				break;
+			case 1:
+				map.edit(row, col, new MapObject(MapKind.BLOCK));
+				//block that has different image
+				if(editInfo.length > 4){
+					map.remerge(row, col, Integer.parseInt(editInfo[4]));
+				}
+				break;
+			case 2:
+				//direction choose
+				Direction d1 = Direction.U;
+				switch(Integer.parseInt(editInfo[4])){
+				case 0:
+					d1 = Direction.U;
+					break;
+				case 1:
+					d1 = Direction.D;
+					break;
+				case 2:
+					d1 = Direction.L;
+					break;
+				case 3:
+					d1 = Direction.R;
+					break;
+				default:
+					break;
+				}
+				//info list
+				String infos[] = editInfo[5].split("/");
+				int infosNo[] = new int[infos.length];
+				for(int i = 0; i < infos.length; i++){
+					infosNo[i] = Integer.parseInt(infos[i]);
+				}
+				map.edit(row, col, new MapInfo(infosNo,d1));
+				break;
+			case 3:
+				//direction choose
+				Direction d2 = Direction.U;
+				switch(Integer.parseInt(editInfo[4])){
+				case 0:
+					d2 = Direction.U;
+					break;
+				case 1:
+					d2 = Direction.D;
+					break;
+				case 2:
+					d2 = Direction.L;
+					break;
+				case 3:
+					d2 = Direction.R;
+					break;
+				default:
+					break;
+				}
+				//info list
+				String infos2[] = editInfo[6].split("/");
+				int infosNo2[] = new int[infos2.length];
+				for(int i = 0; i < infos2.length; i++){
+					infosNo2[i] = Integer.parseInt(infos2[i]);
+				}
+				
+				String subEdit[] = null;
+				if(editInfo.length == 8){
+					subEdit = editInfo[7].split("/");
+					for(int i = 0; i < subEdit.length; i++)
+						subEdit[i] = properties.getProperty("A"+subEdit[i]);
+				}
+					
+				Item item = null;
+				if(Integer.parseInt(editInfo[5]) > 0){
+					item = new Item(Integer.parseInt(editInfo[5]));
+				}
+				map.edit(row, col, new MapEvent(infosNo2,d2,item,subEdit,-1));
+				
+				break;
+			case 4:
+				//System.out.println("AUTO:"+editInfo[4]);
+				//System.out.println(auto_properties.getProperty("A"+editInfo[4]));
+				map.edit(row, col, 
+						new MapAuto("model.rpg.map.MapObjects.auto." + auto_properties.getProperty("A"+editInfo[4])));
+				break;
+			case 5:
+				if(editInfo.length == 5){
+					String door[] = editInfo[4].split("/");
+					map.edit(row, col, new MapDoor(
+							Integer.parseInt(door[0]),Integer.parseInt(door[1]),Integer.parseInt(door[2])));
+				}else{
+					String door[] = editInfo[4].split("/");
+					map.edit(row, col, new MapDoor(
+							Integer.parseInt(door[0]),Integer.parseInt(door[1]),Integer.parseInt(door[2]),
+							false,new Item(Integer.parseInt(editInfo[5]))
+							));
+				}
+				break;
+			case 6:
+				map.edit(row, col, new MapObject(MapKind.SHELL));
+				map.getSomewhere(row, col).setImage(Integer.parseInt(editInfo[4]));
+				break;
+			default:
+				break;
+			}
+			return true;
+		}
+	}
+	
 }

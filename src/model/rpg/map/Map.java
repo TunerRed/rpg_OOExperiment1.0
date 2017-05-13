@@ -27,12 +27,9 @@ public class Map implements Serializable {
 	 * 其初始化应由本地图的MapKind.DOOR所在的位置决定
 	 */
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	/* 设定二维数组地图时左上角位置,XY分别是横向、纵向长度*/
-	public static int wait = 0,playerX = 6, playerY = 6;
+	public static int wait = 0,playerX = Lib.playerX, playerY = Lib.playerY;
 	private MapObject[][] elements;
 	private int mapNo = 0;
 	
@@ -46,8 +43,8 @@ public class Map implements Serializable {
 	private ArrayList<String> eventInfo = new ArrayList<String>();
 	public boolean showInfo = false;
 
-	public Map(int sizeY, int sizeX) {
-		elements = new MapObject[sizeY][sizeX];
+	public Map(int row, int col) {
+		elements = new MapObject[row][col];
 		showInfo = false;
 		init();
 	}
@@ -55,10 +52,18 @@ public class Map implements Serializable {
 	private void init() {
 		for (int i = 0; i < elements.length; i++)
 			for (int j = 0; j < elements[i].length; j++)
-				elements[i][j] = new MapObject(MapKind.BARY, 0);
-		Control.chaseX = 6;
-		Control.chaseY = 6;
+				elements[i][j] = new MapObject(MapKind.FLOOR);
+		Control.chaseX = 2;
+		Control.chaseY = 5;
 		chaseReady = 0;
+	}
+	
+	public void setMapNo(int mapNo){
+		this.mapNo = mapNo;
+	}
+	
+	public int getMapNo(){
+		return mapNo;
 	}
 	
 	/**人物新进入地图时初始化位置，传入人物在elements中的位置，
@@ -83,26 +88,16 @@ public class Map implements Serializable {
 		elements[row][col] = object;
 	}
 	
-	public void merge(){
-		mapNo = ImageSets.getMapsSize();
-		BufferedImage map = new BufferedImage(Lib.boundsPerImg*elements[0].length,
-				Lib.boundsPerImg*elements.length,BufferedImage.TYPE_INT_RGB);
-		Graphics g = map.getGraphics();
-		for (int i = 0; i < elements.length; i++)
-			for (int j = 0; j < elements[0].length; j++)
-				g.drawImage(ImageSets.getImg(elements[i][j]), 
-						j * Lib.boundsPerImg,i * Lib.boundsPerImg, null);
-		ImageSets.addMapImage(map);
+	public void edit(int row, int col, MapObject object,int imageNo){
+		edit(row,col,object);
+		remerge(row,col,imageNo);
 	}
 	
-	public void remerge(){
-		BufferedImage map = new BufferedImage(Lib.boundsPerImg*elements[0].length,
-				Lib.boundsPerImg*elements.length,BufferedImage.TYPE_INT_RGB);
+	public void remerge(int row,int col,int imageNo){
+		BufferedImage map = ImageSets.getMapImage(mapNo);
 		Graphics g = map.getGraphics();
-		for (int i = 0; i < elements.length; i++)
-			for (int j = 0; j < elements[0].length; j++)
-				g.drawImage(ImageSets.getImg(elements[i][j]), 
-						j * Lib.boundsPerImg,i * Lib.boundsPerImg, null);
+		g.drawImage(ImageSets.getBlockImage(imageNo), 
+						col * Lib.boundsPerImg+Lib.adjustY/2,row * Lib.boundsPerImg+Lib.adjustX, null);
 		ImageSets.changeMapImage(map,mapNo);
 	}
 	
@@ -140,14 +135,14 @@ public class Map implements Serializable {
 		//决定是否开始显示信息，当信息开始显示后这一部分应当不再起作用
 		if (	!showInfo && Control.Z 
 				&& ((elements[playerY][playerX].getKind() == MapKind.EVENT)
-					||(elements[playerY][playerX].getKind() == MapKind.ACHIEVEMENT))
+					||(elements[playerY][playerX].getKind() == MapKind.INFO))
 				&& elements[playerY][playerX].getDirection() == direction
 				&& eventInfoEnd && GameObject.checkTimeGap(100)) {
 			eventInfo = elements[playerY][playerX].getInfo();
 			showInfo = true;
 		}
 		//进行读取信息，并判断信息是否已经读完，当信息读完后，这一部分不再起作用
-		else if (showInfo) {
+		if (showInfo) {
 			//强制转换Graphics2D设置不透明度
 			((Graphics2D) g).setComposite(AlphaComposite.SrcOver.derive(0.5f));
 			g.setColor(Color.WHITE);
@@ -178,10 +173,6 @@ public class Map implements Serializable {
 		g.drawImage(ImageSets.getMapImage(mapNo),
 				Player.getInstance().getPaintX()-playerX*Lib.boundsPerImg + Lib.adjustX,
 				Player.getInstance().getPaintY()-playerY*Lib.boundsPerImg + Lib.adjustY,null);
-		//追逐战过程
-		if(startChase){
-			chase(g);
-		}
 	}
 	/**人物移动时的画图方法
 	 * @param g 画笔
@@ -250,8 +241,9 @@ public class Map implements Serializable {
 	 * */
 	public void checkShell(Graphics g){
 		if(elements[playerY + 1][playerX].getKind() == MapKind.SHELL){
-			g.drawImage(ImageSets.getImg(elements[playerY + 1 ][playerX]), Player.getInstance().getPaintX()+Lib.adjustX,
-					Player.getInstance().getPaintY() + Lib.adjustY, null);
+			g.drawImage(ImageSets.getBlockImage(elements[playerY + 1 ][playerX]), 
+					Player.getInstance().getPaintX() + (int)(1.7 * Lib.adjustX),
+					Player.getInstance().getPaintY() + (int)(1.25 * Lib.adjustY), null);
 		}
 	}
 	/**检查所在地是否为Auto属性
@@ -346,8 +338,8 @@ public class Map implements Serializable {
 	 * 检验是否为可以达成成就的点
 	 * @param direction 人物现在的方向
 	 * */
-	public boolean isAchievement(Direction direction){
-		if(elements[playerY][playerX].getKind() == MapKind.ACHIEVEMENT 
+	public boolean isEvent(Direction direction){
+		if(elements[playerY][playerX].getKind() == MapKind.EVENT 
 			&& direction == elements[playerY][playerX].getDirection()){
 			return true;
 		}
@@ -358,7 +350,8 @@ public class Map implements Serializable {
 	 * @param mapList 全部的地图对象
 	 * */
 	public void editMapList(ArrayList<Map> mapList){
-		elements[playerY][playerX].editMapList(mapList);
+		if(!showInfo)
+			elements[playerY][playerX].editMapList(mapList);
 	}
 	
 	/*
@@ -401,6 +394,11 @@ public class Map implements Serializable {
 	 * @param g 画笔
 	 * */
 	public void chase(Graphics g){
+		//追逐战过程
+		if(!startChase)
+			return;
+		if(showInfo)
+			return;
 		//如果现在在等待门相应，那么久没有必要画敌人，把画图部分放进判断里
 		if(!initChase()){
 			chaseWait++;
@@ -459,8 +457,6 @@ public class Map implements Serializable {
 							Player.getInstance().getPaintX()-(playerX-Control.chaseX)*Lib.boundsPerImg+Lib.adjustX, Lib.gameHEIGHT/2-(playerY-Control.chaseY)*Lib.boundsPerImg-20, null);
 				}
 		}
-		
-		
 	}
 	
 	

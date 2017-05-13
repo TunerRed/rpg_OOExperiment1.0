@@ -27,6 +27,7 @@ public abstract class Auto extends GameObject{
 	public Auto(BufferedImage image){
 		this.image = image;
 	}
+	
 	@Override
 	protected void keyResponse() {
 		

@@ -6,21 +6,19 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import control.*;
+import model.rpg.map.Map;
 /**
  * 游戏的主类，含有main方法
  * */
 public class GameMain extends JFrame {
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * 主方法
 	 * */
 	public static void main(String[] args) {
-		
-		new ImageSets();
+		ImageSets.init();
 		new GameMain();
 	}
 	

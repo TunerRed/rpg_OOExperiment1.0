@@ -4,6 +4,8 @@ import java.applet.AudioClip;
 import java.awt.Graphics;
 
 import control.Control;
+import control.ImageSets;
+import control.Lib;
 import model.rpg.Player;
 import model.rpg.SaveData;
 import model.rpg.map.Map;
@@ -106,16 +108,16 @@ public abstract class GameObject {
 	}
 	/**由于是静态对象，只要游戏不关闭窗口，得到的Item就不会丢失，所以必须清空*/
 	protected void clearStatic(){
-		
-				Player.getInstance().getItems().clear();
-				Map.startChase = false;
-				Map.chaseReady = 0;
-				Control.chaseX = 6;
-				Control.chaseY = 6;
-				Map.readyForDoor = false;
-				Map.playerX = 6;
-				Map.playerY = 6;
-				Player.getInstance().clearDirection();
+			Player.getInstance().getItems().clear();
+			Map.startChase = false;
+			Map.chaseReady = 0;
+			Control.chaseX = Lib.chaseX;
+			Control.chaseY = Lib.chaseY;
+			Map.readyForDoor = false;
+			Map.playerX = Lib.playerX;
+			Map.playerY = Lib.playerY;
+			Player.getInstance().clearDirection();
+			ImageSets.init();
 	}
 	/**
 	 * 点击音效

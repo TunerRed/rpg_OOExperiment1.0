@@ -10,7 +10,9 @@ public final class Lib {
 	public final static int 
 			gameWIDTH = 800,gameHEIGHT = 600,
 			boundsPerImg = 45
-			,adjustX = 20,adjustY =  + boundsPerImg + 7;
+			,adjustX = 17,adjustY =  40
+			,playerX = 5,playerY = 16
+			,chaseX = 2,chaseY = 5;
 			// 设定画地图时左上角位置并根据实际情况进行相应的调整
 	public final static Font regular = loadFont("source/FONT.TTF",23);
 	public final static Font terror = loadFont("source/字体2.ttf",25);
